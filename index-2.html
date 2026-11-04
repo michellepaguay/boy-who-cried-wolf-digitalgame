@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>The Boy Who Cried Wolf</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<style>
+/* Layout: plain moss-green page. The game sits in a parchment frame; beside it a cozy RPG-style
+   side panel (status card + tabbed Quests / Guide log). Single deliberate look, no theme switch. */
+:root{
+  --moss:#1f281d;          /* plain page background */
+  --paper:#ebe1c6;         /* parchment */
+  --paper-2:#ddd1af;
+  --paper-3:#cfc19b;
+  --ink:#2b2a1f;
+  --ink-soft:#615d47;
+  --line:#6e7451;          /* olive border */
+  --sage:#7e9466;
+  --sage-dk:#4d6140;
+  --sage-lt:#d5ddbd;
+  --gold:#c08a2c;
+  --rose:#b5554a;
+  --cream:#efe6cc;
+  --caps:"IM Fell English SC","IM Fell English",Georgia,"Times New Roman",serif;
+  --fell:"IM Fell English",Georgia,"Times New Roman",serif;
+  --serif:"Alegreya",Georgia,"Times New Roman",serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--moss);color:var(--cream)}
+body{
+  font-family:var(--serif);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:32px 56px;
+}
+.wrap{max-width:1200px;margin:0 auto;display:grid;gap:28px}
+.sprig{display:block;width:120px;height:14px;color:var(--sage)}
+
+/* parchment panel with a thin double border */
+.parch{
+  background:var(--paper);color:var(--ink);border:2px solid var(--line);border-radius:6px;
+  box-shadow:inset 0 0 0 3px var(--paper), inset 0 0 0 4px rgba(110,116,81,.55), 0 12px 28px rgba(0,0,0,.35);
+}
+
+/* ---------- Title ---------- */
+header{display:grid;justify-items:center;text-align:center;gap:8px}
+.eyebrow{font-family:var(--caps);font-size:1rem;letter-spacing:.12em;color:var(--sage)}
+h1{font-family:var(--caps);font-weight:400;font-size:clamp(2.2rem,6vw,4rem);line-height:1;margin:0;color:var(--cream);text-wrap:balance}
+.motto{font-family:var(--fell);font-style:italic;font-size:1.15rem;color:var(--sage);margin:-6px 0 2px}
+.pitch{font-family:var(--fell);font-style:italic;font-size:clamp(1.05rem,2.4vw,1.3rem);color:#c9c7a8;margin:0;max-width:46ch}
+
+/* ---------- Game ---------- */
+.game{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:24px;align-items:start}
+@media (max-width:920px){.game{grid-template-columns:minmax(0,1fr)}}
+.frame{padding:10px}
+.stage{position:relative;overflow:hidden;border-radius:3px;border:2px solid var(--ink);background:#2f4a2c}
+canvas{display:block;width:100%;height:auto;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
+
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(20,26,18,.55);padding:12px;overflow:auto}
+.overlay .panel{
+  max-width:520px;text-align:center;display:grid;gap:10px;justify-items:center;padding:22px 26px;
+  background:var(--paper);color:var(--ink);border:2px solid var(--line);border-radius:6px;
+  box-shadow:inset 0 0 0 3px var(--paper), inset 0 0 0 4px rgba(110,116,81,.55), 0 12px 28px rgba(0,0,0,.4);
+}
+.overlay h2{font-family:var(--caps);font-weight:400;font-size:clamp(1.4rem,4vw,2.2rem);line-height:1.05;margin:0;text-wrap:balance}
+.overlay p{margin:0;color:var(--ink-soft)}
+.overlay .big{font-family:var(--caps);font-size:clamp(1.8rem,5vw,2.8rem);color:var(--sage-dk);line-height:1;font-variant-numeric:tabular-nums}
+.overlay .stats{color:var(--ink);font-variant-numeric:tabular-nums}
+.overlay .newbest{font-family:var(--caps);letter-spacing:.08em;color:var(--rose)}
+.diffs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.diff{display:grid;min-width:110px;padding:7px 14px;border-radius:4px;text-align:center;
+  background:var(--paper-2);color:var(--ink);border:1.5px solid var(--line)}
+.diff b{font-family:var(--caps);font-weight:400;font-size:1.15rem}
+.diff small{color:var(--ink-soft);font-size:.8rem;line-height:1.25;font-variant-numeric:tabular-nums}
+.diff.rec{background:var(--sage-lt);border-color:var(--sage-dk)}
+.diff:hover{background:var(--sage-lt)}
+@media (max-width:560px){.overlay p.long{display:none}.overlay .panel{padding:12px 14px;gap:6px}.diff{min-width:0;padding:6px 10px}.diff small{display:none}}
+
+button{font:inherit;cursor:pointer}
+.btn{background:var(--sage-dk);color:var(--cream);border:0;border-radius:4px;padding:9px 22px;font-family:var(--caps);font-size:1.1rem}
+.btn:focus-visible,.ghost:focus-visible,.work:focus-visible,.diff:focus-visible,.tab:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.work{
+  flex:1 1 220px;min-height:58px;border-radius:6px;border:2px solid var(--line);
+  background:var(--paper-2);color:var(--ink);font-family:var(--caps);font-size:1.3rem;letter-spacing:.03em;
+  box-shadow:inset 0 0 0 3px var(--paper-2), inset 0 0 0 4px rgba(110,116,81,.5);
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+.work.ready{background:var(--sage-dk);color:var(--cream);border-color:var(--ink);box-shadow:inset 0 0 0 3px var(--sage-dk), inset 0 0 0 4px rgba(239,230,204,.35)}
+.work:active{transform:translateY(2px)}
+.ghost{background:transparent;border:1.5px solid var(--line);color:var(--cream);border-radius:4px;padding:9px 14px;min-height:44px;font-family:var(--caps)}
+.ghost:hover{background:rgba(126,148,102,.18)}
+.keys{font-size:.95rem;color:#b9b89a;flex-basis:100%}
+kbd{display:inline-grid;place-items:center;min-width:1.6em;font-family:var(--caps);font-size:.85rem;padding:0 6px;
+  background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:999px}
+
+/* ---------- Side panel ---------- */
+aside{display:grid;gap:16px}
+.status{padding:14px 16px 16px;display:grid;gap:8px}
+.status .name{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(110,116,81,.5);padding-bottom:6px}
+.status .name b{font-family:var(--caps);font-weight:400;font-size:1.5rem;letter-spacing:.04em}
+.status .name span{font-family:var(--caps);color:var(--ink-soft)}
+.status dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0;text-align:center}
+.status dt{font-family:var(--caps);font-size:.85rem;color:var(--ink-soft)}
+.status dd{margin:0;font-family:var(--caps);font-size:1.6rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.status #scoreVal{color:var(--sage-dk)}
+
+.log{padding:0 0 14px;overflow:hidden}
+.tabs{display:flex;gap:4px;padding:8px 10px 0;background:var(--paper-2);border-bottom:1.5px solid var(--line);border-radius:4px 4px 0 0}
+.tab{flex:1;font-family:var(--caps);font-size:1.05rem;letter-spacing:.06em;color:var(--ink-soft);
+  background:var(--paper-3);border:1.5px solid var(--line);border-bottom:0;border-radius:4px 4px 0 0;padding:4px 10px;margin-bottom:-1.5px}
+.tab[aria-selected="true"]{background:var(--paper);color:var(--ink)}
+.tabpanel{padding:12px 14px 0;display:grid;gap:12px}
+.loghead{display:grid;justify-items:center;gap:2px}
+.loghead h2{font-family:var(--caps);font-weight:400;font-size:1.35rem;margin:0;line-height:1.1}
+.loghead span{font-size:.9rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.loghead .sprig{color:var(--line)}
+
+.cards{display:grid;gap:8px;list-style:none;margin:0;padding:0}
+.card{
+  display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:0 10px;align-items:center;
+  padding:8px 10px;border:1px solid rgba(110,116,81,.55);border-radius:4px;background:#f2ead3;
+  transition:background .2s, opacity .3s, border-color .2s;
+}
+.card .chip{grid-column:1;grid-row:1 / span 3;width:36px;height:36px;border-radius:4px;border:1.5px solid var(--ink);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.25)}
+.card .task{grid-column:2;grid-row:1;font-family:var(--fell);font-size:1.12rem;line-height:1.15}
+.card .house{grid-column:2;grid-row:2;font-size:.85rem;color:var(--ink-soft)}
+.card .kind{grid-column:2;grid-row:3;font-family:var(--caps);font-size:.8rem;letter-spacing:.06em;color:var(--sage-dk)}
+.card .secs{grid-column:3;grid-row:1 / span 3;font-family:var(--caps);font-size:1.35rem;text-align:right;line-height:1;font-variant-numeric:tabular-nums}
+.card .secs small{display:block;font-size:.72rem;color:var(--ink-soft)}
+.card .bar{grid-column:1 / -1;grid-row:4;height:5px;background:var(--paper-3);border-radius:3px;overflow:hidden;margin-top:7px}
+.card .bar i{display:block;height:100%;width:0;background:var(--gold)}
+.card.here{background:var(--sage-lt);border-color:var(--sage-dk)}
+.card.done{opacity:.55}
+.card.done .bar i{background:var(--sage)}
+.card.done .secs::before{content:"✓ ";color:var(--sage-dk)}
+.bonusnote{font-size:.95rem;color:var(--ink-soft);margin:0;text-align:center}
+.bonusnote b{color:var(--sage-dk)}
+
+.guide{display:grid;gap:12px}
+.guide h3{font-family:var(--caps);font-weight:400;font-size:1.15rem;margin:0;color:var(--sage-dk)}
+.guide p,.guide ul{margin:0;font-size:.95rem}
+.guide ul{padding-left:1.1em;display:grid;gap:3px}
+footer{display:grid;justify-items:center;gap:6px;font-family:var(--caps);color:#8f9278;font-size:.95rem}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">A Game of Trust</div>
+    <p class="motto">Honesty is the best policy.</p>
+    <h1>The Boy Who Cried Wolf</h1>
+    <svg class="sprig" viewBox="0 0 120 14" aria-hidden="true"><path d="M2 7H50M70 7H118" stroke="currentColor" stroke-width="1"/><path d="M60 1L66 7L60 13L54 7Z" fill="currentColor"/><ellipse cx="45" cy="4.4" rx="5.5" ry="2" transform="rotate(-25 45 4.4)" fill="currentColor"/><ellipse cx="75" cy="4.4" rx="5.5" ry="2" transform="rotate(25 75 4.4)" fill="currentColor"/><ellipse cx="37" cy="9.6" rx="4.5" ry="1.6" transform="rotate(20 37 9.6)" fill="currentColor"/><ellipse cx="83" cy="9.6" rx="4.5" ry="1.6" transform="rotate(-20 83 9.6)" fill="currentColor"/></svg>
+    <p class="pitch">How long can you keep the villagers' trust before time runs out?</p>
+  </header>
+
+  <section class="game">
+    <div>
+      <div class="frame parch">
+        <div class="stage">
+          <canvas id="cv" width="880" height="600" aria-label="Top-down village with four houses and a trust meter"></canvas>
+          <div class="overlay" id="overlay"><div class="panel" id="panel"></div></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="work" id="workBtn" type="button">Walk to a house</button>
+        <button class="ghost" id="pauseBtn" type="button">Pause</button>
+        <button class="ghost" id="soundBtn" type="button" aria-pressed="true">Sound on</button>
+        <div class="keys"><kbd>WASD</kbd> walk &nbsp;·&nbsp; tap a house to walk there &nbsp;·&nbsp; <kbd>Space</kbd> start / hold a chore &nbsp;·&nbsp; <kbd>P</kbd> pause</div>
+      </div>
+    </div>
+
+    <aside aria-live="polite">
+      <div class="status parch">
+        <div class="name"><b>The Boy</b><span id="roundTitle">Round 1</span></div>
+        <dl>
+          <div><dt>Score</dt><dd id="scoreVal">0</dd></div>
+          <div><dt>Streak</dt><dd id="streakVal">0</dd></div>
+          <div><dt>Best</dt><dd id="bestVal">0</dd></div>
+        </dl>
+      </div>
+
+      <div class="log parch">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" id="tab-quests" aria-selected="true" aria-controls="panel-quests" type="button">Quests</button>
+          <button class="tab" role="tab" id="tab-guide" aria-selected="false" aria-controls="panel-guide" type="button">Guide</button>
+        </div>
+        <div class="tabpanel" id="panel-quests" role="tabpanel" aria-labelledby="tab-quests">
+          <div class="loghead">
+            <h2>Village Requests</h2>
+            <span id="roundCount">of 3 · 0/12 tasks</span>
+            <svg class="sprig" viewBox="0 0 120 14" aria-hidden="true"><path d="M2 7H50M70 7H118" stroke="currentColor" stroke-width="1"/><path d="M60 1L66 7L60 13L54 7Z" fill="currentColor"/><ellipse cx="45" cy="4.4" rx="5.5" ry="2" transform="rotate(-25 45 4.4)" fill="currentColor"/><ellipse cx="75" cy="4.4" rx="5.5" ry="2" transform="rotate(25 75 4.4)" fill="currentColor"/></svg>
+          </div>
+          <ul class="cards" id="cards"></ul>
+          <p class="bonusnote">Every 4 chores wins back <b id="bonusSecs">+15 seconds</b> of trust.</p>
+        </div>
+        <div class="tabpanel guide" id="panel-guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
+          <div>
+            <h3>The Goal</h3>
+            <p>Finish all 12 chores before the trust meter runs dry. If it hits zero, the wolf comes and nobody believes you.</p>
+          </div>
+          <div>
+            <h3>The Chores</h3>
+            <ul>
+              <li><b>Hold</b>: hold Space or the big button for the full time. Letting go pauses it.</li>
+              <li><b>Timing</b>: press Space (or tap) when the marker is in the gold zone.</li>
+              <li><b>Arrows</b>: enter the arrows in order.</li>
+              <li>Mistakes cost trust. Once you start a chore you stay until it's done.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Keeping Score</h3>
+            <ul>
+              <li>100 per chore, plus 50 per second faster than its time.</li>
+              <li>Mistake-free chores build a streak worth extra points.</li>
+              <li>Catch stray lambs for 75 points each.</li>
+              <li>Win to bank 20 points per second of trust left. Hard scores ×1.5.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <footer>
+    <svg class="sprig" viewBox="0 0 120 14" aria-hidden="true"><path d="M2 7H50M70 7H118" stroke="currentColor" stroke-width="1"/><path d="M60 1L66 7L60 13L54 7Z" fill="currentColor"/></svg>
+    EST 310 · Project #2
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(o => {
+    const on = o === t;
+    o.setAttribute("aria-selected", on);
+    document.getElementById(o.getAttribute("aria-controls")).hidden = !on;
+  });
+}));
+</script>
+<script>
+/* ============================================================
+   TUNING — change these to rebalance the game
+   ============================================================ */
+const DIFFS = {
+  easy:   { label: "Easy",   start: 90, max: 90, missPenalty: 0,   drain: [1, 1, 1],       mult: 0.75, note: "90s, no mistake penalty" },
+  normal: { label: "Normal", start: 60, max: 60, missPenalty: 0.5, drain: [1, 1, 1],       mult: 1,    note: "60s, class rules" },
+  hard:   { label: "Hard",   start: 60, max: 60, missPenalty: 1,   drain: [1, 1.25, 1.5],  mult: 1.5,  note: "drain speeds up" },
+};
+const CONFIG = {
+  ROUND_BONUS: 15,       // seconds of trust returned after every 4 tasks (try 15 or 20)
+  WALK_SPEED: 290,       // pixels per second
+  LOW_TRUST: 15,         // below this the wolf starts watching
+  LAMB_EVERY: [6, 10],   // seconds between stray lambs
+  LAMB_LIFE: 7,          // seconds a lamb stays
+};
+
+const HOUSES = [
+  { name: "Baker",      villager: "Old Marta", wall: "#d9a066", roof: "#a8483a", cx: 190, cy: 130, door: "bottom" },
+  { name: "Shepherd",   villager: "Tomas",     wall: "#d8c69a", roof: "#6b7f3e", cx: 610, cy: 130, door: "bottom" },
+  { name: "Blacksmith", villager: "Greta",     wall: "#9a958c", roof: "#4f5966", cx: 190, cy: 470, door: "top" },
+  { name: "Elder",      villager: "Elder Ivo", wall: "#cfb48a", roof: "#7a4f7f", cx: 610, cy: 470, door: "top" },
+];
+
+// One array per round, one card per house. type: "hold" | "timing" | "arrows". secs = the card's time (par).
+const ROUNDS = [
+  [ { house: 0, task: "Fetch the flour sacks", secs: 3, type: "hold" },
+    { house: 1, task: "Count the sheep",       secs: 4, type: "timing" },
+    { house: 2, task: "Pump the bellows",      secs: 3, type: "hold" },
+    { house: 3, task: "Carry firewood",        secs: 4, type: "arrows" } ],
+  [ { house: 0, task: "Deliver the bread",     secs: 4, type: "arrows" },
+    { house: 1, task: "Mend the fence",        secs: 5, type: "timing" },
+    { house: 2, task: "Sharpen the sickles",   secs: 4, type: "hold" },
+    { house: 3, task: "Read the letters",      secs: 3, type: "arrows" } ],
+  [ { house: 0, task: "Knead the dough",       secs: 4, type: "hold" },
+    { house: 1, task: "Herd the strays home",  secs: 5, type: "arrows" },
+    { house: 2, task: "Haul the iron",         secs: 5, type: "hold" },
+    { house: 3, task: "Ring the bell",         secs: 4, type: "timing" } ],
+];
+const KIND_LABEL = { hold: "Hold", timing: "Timing", arrows: "Arrows" };
+
+/* ============================================================
+   Setup
+   ============================================================ */
+const W = 880, H = 600;
+const HW = 190, HH = 100;
+const PLAY = { x0: 40, x1: 760, y0: 52, y1: 566 };
+const METER = { x: 800, y: 70, w: 44, h: 450 };
+const PANEL = { x: 215, y: 214, w: 370, h: 172 };
+const DOOR_R = 36;
+const TOTAL_TASKS = ROUNDS.reduce((n, r) => n + r.length, 0);
+
+HOUSES.forEach(h => {
+  h.rect = { x: h.cx - HW / 2, y: h.cy - HH / 2, w: HW, h: HH };
+  h.spot = { x: h.cx, y: h.door === "bottom" ? h.cy + HH / 2 + 26 : h.cy - HH / 2 - 26 };
+});
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+(function fit() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+})();
+
+let seed = 7;
+const srnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const tufts = Array.from({ length: 140 }, () => ({ x: 40 + srnd() * 720, y: 60 + srnd() * 520, s: 2 + srnd() * 3 }));
+const pines = Array.from({ length: 24 }, (_, i) => ({ x: i * 34 + srnd() * 10, h: 34 + srnd() * 18 }));
+const flowers = Array.from({ length: 30 }, () => ({ x: 50 + srnd() * 700, y: 60 + srnd() * 510, c: srnd() > .5 ? "#f4d35e" : "#f0e5c6" }));
+const rand = (a, b) => a + Math.random() * (b - a);
+
+/* ============================================================
+   Best scores (per viewer, optional)
+   ============================================================ */
+function getBest(d) { try { return +localStorage.getItem("bcw-best-" + d) || 0; } catch (e) { return 0; } }
+function setBest(d, v) { try { localStorage.setItem("bcw-best-" + d, v); } catch (e) {} }
+let diffKey = "normal";
+try { diffKey = localStorage.getItem("bcw-diff") || "normal"; } catch (e) {}
+if (!DIFFS[diffKey]) diffKey = "normal";
+
+/* ============================================================
+   State
+   ============================================================ */
+let S;
+const input = { keys: new Set(), holdKey: false, holdBtn: false, holdCanvas: false };
+
+function reset() {
+  const D = DIFFS[diffKey];
+  S = {
+    mode: "ready", D,
+    time: D.start,
+    round: 0,
+    cards: ROUNDS.map(r => r.map(c => ({ ...c, frac: 0, done: false }))),
+    boy: { x: 400, y: 300, face: 1, step: 0, moving: false },
+    target: null, mini: null,
+    floats: [], parts: [], lambs: [], lambTimer: 4,
+    elapsed: 0, clock: 0, shake: 0,
+    tasksDone: 0, score: 0, streak: 0, bestStreak: 0, lambsCaught: 0, misses: 0,
+    wolfX: -120, best: getBest(diffKey), newBest: false,
+  };
+  renderCards(); updateBoard();
+  showOverlay("start");
+}
+const roundCards = () => S.cards[Math.min(S.round, S.cards.length - 1)];
+
+/* ============================================================
+   Sound
+   ============================================================ */
+let audio = null, soundOn = true;
+function beep(freq, dur = .12, type = "triangle", vol = .08) {
+  if (!audio || !soundOn) return;
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001, audio.currentTime + dur);
+  o.connect(g).connect(audio.destination);
+  o.start(); o.stop(audio.currentTime + dur);
+}
+const chord = (fs, gap = .08) => fs.forEach((f, i) => setTimeout(() => beep(f, .18), i * gap * 1000));
+
+/* ============================================================
+   Side panel
+   ============================================================ */
+const cardsEl = document.getElementById("cards");
+function renderCards() {
+  const r = Math.min(S.round, ROUNDS.length - 1);
+  document.getElementById("roundTitle").textContent = `Round ${r + 1}`;
+  updateCount();
+  cardsEl.innerHTML = "";
+  S.cards[r].forEach((c, i) => {
+    const h = HOUSES[c.house];
+    const li = document.createElement("li");
+    li.className = "card"; li.id = "card-" + i;
+    li.innerHTML = `<span class="chip" style="background:${h.roof}"></span>
+      <span class="house">${h.name} · ${h.villager}</span>
+      <span class="secs">${c.secs}s<small>time</small></span>
+      <span class="task">${c.task}</span>
+      <span class="kind">${KIND_LABEL[c.type]}</span>
+      <span class="bar"><i></i></span>`;
+    cardsEl.appendChild(li);
+  });
+  syncCards();
+}
+function updateCount() {
+  document.getElementById("roundCount").textContent = `of ${ROUNDS.length} · ${S.tasksDone}/${TOTAL_TASKS} tasks`;
+}
+function updateBoard() {
+  document.getElementById("scoreVal").textContent = S.score.toLocaleString();
+  document.getElementById("streakVal").textContent = S.streak ? "×" + S.streak : "0";
+  document.getElementById("bestVal").textContent = Math.max(S.best, 0).toLocaleString();
+}
+function syncCards() {
+  const here = houseAtDoor();
+  roundCards().forEach((c, i) => {
+    const el = document.getElementById("card-" + i);
+    if (!el) return;
+    el.querySelector(".bar i").style.width = (c.frac * 100) + "%";
+    el.classList.toggle("done", c.done);
+    el.classList.toggle("here", !c.done && here === c.house && S.mode === "playing");
+  });
+}
+
+const workBtn = document.getElementById("workBtn");
+let workLabel = "";
+function syncWorkBtn() {
+  let label = "Walk to a house", ready = false;
+  if (S.mode === "playing") {
+    if (S.mini) label = S.mini.type === "arrows" ? "Use the arrows" : S.mini.type === "hold" ? "Hold to work" : "Space / tap in the zone";
+    else if (pendingHere()) { label = "Start task"; ready = true; }
+  }
+  if (label !== workLabel) { workBtn.textContent = label; workLabel = label; }
+  workBtn.classList.toggle("ready", ready || !!S.mini);
+}
+
+/* ============================================================
+   Overlay
+   ============================================================ */
+const overlay = document.getElementById("overlay");
+const panel = document.getElementById("panel");
+function diffButtons() {
+  return `<div class="diffs">${Object.entries(DIFFS).map(([k, d]) =>
+    `<button class="diff${k === diffKey ? " rec" : ""}" data-d="${k}"><b>${d.label}</b><small>${d.note}</small><small>Best ${getBest(k).toLocaleString()}</small></button>`).join("")}</div>`;
+}
+function rankFor() {
+  if (S.mode === "lost") return "The boy who cried wolf";
+  if (S.time >= 20) return "Village hero";
+  if (S.time >= 10) return "Trusted shepherd";
+  return "Barely believed";
+}
+function showOverlay(kind) {
+  overlay.hidden = false;
+  if (kind === "start") {
+    panel.innerHTML = `<h2>Win back their trust</h2>
+      <p class="long">Walk to a house with a <b>!</b>, start its task, and beat the mini-game. Finish all ${TOTAL_TASKS} before the meter empties.</p>
+      ${diffButtons()}`;
+  } else if (kind === "pause") {
+    panel.innerHTML = `<h2>Paused</h2><button class="btn" id="go">Resume</button>`;
+  } else {
+    const won = kind === "won";
+    panel.innerHTML = `<h2>${won ? "The village believes you" : "Nobody came when you cried wolf"}</h2>
+      <div class="big">${S.score.toLocaleString()}</div>
+      ${S.newBest ? `<div class="newbest">New best on ${S.D.label}</div>` : `<p>Best on ${S.D.label}: ${S.best.toLocaleString()}</p>`}
+      <p class="stats">${rankFor()} · ${S.tasksDone}/${TOTAL_TASKS} tasks · ${won ? S.time.toFixed(1) + "s trust left · " : ""}best streak ×${S.bestStreak} · ${S.lambsCaught} lambs</p>
+      ${diffButtons()}`;
+  }
+  panel.querySelectorAll(".diff").forEach(b => b.addEventListener("click", () => {
+    initAudio();
+    diffKey = b.dataset.d;
+    try { localStorage.setItem("bcw-diff", diffKey); } catch (e) {}
+    reset(); start();
+  }));
+  const go = document.getElementById("go");
+  if (go) go.addEventListener("click", () => { initAudio(); resume(); });
+  const focusEl = panel.querySelector(".diff.rec") || go;
+  if (focusEl) focusEl.focus({ preventScroll: true });
+}
+function initAudio() { if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } }
+function start() { S.mode = "playing"; overlay.hidden = true; chord([392, 523]); }
+function pause() { if (S.mode !== "playing") return; S.mode = "paused"; showOverlay("pause"); }
+function resume() { if (S.mode !== "paused") return; S.mode = "playing"; overlay.hidden = true; }
+
+/* ============================================================
+   Mini-games
+   ============================================================ */
+const DIRS = ["U", "D", "L", "R"];
+function startMini(card) {
+  const r = S.round;
+  const m = { card, type: card.type, t0: S.elapsed, misses: 0, pop: 0, flash: 0 };
+  if (m.type === "hold") { m.held = 0; m.holding = false; }
+  if (m.type === "timing") {
+    m.need = Math.max(3, card.secs - 1); m.hits = 0;
+    m.p = 0; m.dir = 1; m.speed = 1.1 + r * 0.25; m.w = 0.22 - r * 0.03; m.c = rand(.25, .75);
+  }
+  if (m.type === "arrows") {
+    m.seq = Array.from({ length: card.secs + 2 }, () => DIRS[Math.floor(Math.random() * 4)]); m.i = 0;
+  }
+  S.mini = m; S.target = null; input.keys.clear();
+  beep(440, .08);
+}
+function miniFrac(m) {
+  return m.type === "hold" ? m.held / m.card.secs : m.type === "timing" ? m.hits / m.need : m.i / m.seq.length;
+}
+function miss() {
+  const m = S.mini;
+  m.misses++; S.misses++; m.flash = .3; S.shake = .25;
+  if (S.D.missPenalty) {
+    S.time -= S.D.missPenalty;
+    addFloat(`-${S.D.missPenalty}s`, METER.x + METER.w / 2, METER.y + 30, "#e2604b");
+  }
+  if (S.streak) { S.streak = 0; updateBoard(); }
+  beep(140, .18, "sawtooth", .06);
+}
+function action() {
+  if (S.mode !== "playing") return;
+  const m = S.mini;
+  if (!m) { const card = pendingHere(); if (card) startMini(card); return; }
+  if (m.type === "timing") {
+    if (Math.abs(m.p - m.c) <= m.w / 2) {
+      m.hits++; m.pop = .2; beep(700 + m.hits * 80, .1);
+      m.c = rand(.15, .85); m.w = Math.max(.1, m.w - .015);
+    } else miss();
+  }
+  checkMini();
+}
+function arrowInput(d) {
+  const m = S.mini;
+  if (!m || m.type !== "arrows" || S.mode !== "playing") return;
+  if (m.seq[m.i] === d) { m.i++; m.pop = .12; beep(520 + m.i * 60, .06); }
+  else miss();
+  checkMini();
+}
+function checkMini() {
+  const m = S.mini;
+  m.card.frac = Math.min(1, miniFrac(m));
+  if (m.card.frac >= 1) finishCard(m);
+}
+
+/* ============================================================
+   Input
+   ============================================================ */
+const MOVE_KEYS = { ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0] };
+const KEY_DIR = { ArrowUp: "U", KeyW: "U", ArrowDown: "D", KeyS: "D", ArrowLeft: "L", KeyA: "L", ArrowRight: "R", KeyD: "R" };
+addEventListener("keydown", e => {
+  const onButton = e.target.closest && e.target.closest("button");
+  if (S.mode !== "playing") {
+    if (e.code === "KeyP" || e.code === "Escape") resume();
+    return;
+  }
+  if (MOVE_KEYS[e.code]) {
+    e.preventDefault();
+    if (S.mini) { if (!e.repeat) arrowInput(KEY_DIR[e.code]); }
+    else { input.keys.add(e.code); S.target = null; }
+  }
+  if (e.code === "Space" || e.code === "KeyE" || e.code === "Enter") {
+    e.preventDefault();
+    input.holdKey = true;
+    if (!e.repeat) action();
+  }
+  if (e.code === "KeyP" || e.code === "Escape") pause();
+});
+addEventListener("keyup", e => {
+  input.keys.delete(e.code);
+  if (e.code === "Space" || e.code === "KeyE" || e.code === "Enter") input.holdKey = false;
+});
+addEventListener("blur", () => { input.keys.clear(); input.holdKey = input.holdBtn = input.holdCanvas = false; });
+
+workBtn.addEventListener("pointerdown", e => { e.preventDefault(); input.holdBtn = true; action(); });
+["pointerup", "pointerleave", "pointercancel"].forEach(t => workBtn.addEventListener(t, () => input.holdBtn = false));
+workBtn.addEventListener("keydown", e => { if (e.code === "Enter") e.stopPropagation(); });
+workBtn.addEventListener("click", e => { if (e.detail === 0) action(); }); // keyboard activation
+workBtn.addEventListener("contextmenu", e => e.preventDefault());
+
+document.getElementById("pauseBtn").addEventListener("click", () => S.mode === "playing" ? pause() : resume());
+const soundBtn = document.getElementById("soundBtn");
+soundBtn.addEventListener("click", () => {
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? "Sound on" : "Sound off";
+  soundBtn.setAttribute("aria-pressed", soundOn);
+});
+
+function toCanvas(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
+}
+function arrowButtons() {
+  const bw = 64, gap = 12, total = 4 * bw + 3 * gap, x0 = PANEL.x + (PANEL.w - total) / 2;
+  return DIRS.map((d, i) => ({ d, x: x0 + i * (bw + gap), y: PANEL.y + PANEL.h - 50, w: bw, h: 38 }));
+}
+cv.addEventListener("pointerdown", e => {
+  e.preventDefault();
+  if (S.mode !== "playing") return;
+  const p = toCanvas(e);
+  input.holdCanvas = true;
+  if (S.mini) {
+    if (S.mini.type === "arrows") {
+      const b = arrowButtons().find(b => inRect(p, b, 4));
+      if (b) arrowInput(b.d);
+    } else action();
+    return;
+  }
+  const h = HOUSES.findIndex(h => inRect(p, h.rect, 6) || dist(p, h.spot) < DOOR_R + 6);
+  if (h >= 0) {
+    if (houseAtDoor() === h && pendingHere()) action();
+    else S.target = { ...HOUSES[h].spot };
+  } else if (p.x < PLAY.x1) S.target = p;
+});
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const inRect = (p, r, pad = 0) => p.x > r.x - pad && p.x < r.x + r.w + pad && p.y > r.y - pad && p.y < r.y + r.h + pad;
+function houseAtDoor() { const i = HOUSES.findIndex(h => dist(S.boy, h.spot) < DOOR_R); return i < 0 ? null : i; }
+function pendingHere() { const h = houseAtDoor(); return h === null ? null : roundCards().find(c => c.house === h && !c.done) || null; }
+function blocked(x, y, R = 13) {
+  return HOUSES.some(h => x > h.rect.x - R && x < h.rect.x + h.rect.w + R && y > h.rect.y - R && y < h.rect.y + h.rect.h + R);
+}
+function addFloat(text, x, y, color, size = 20) { S.floats.push({ text, x, y, color, size, t: 0 }); }
+function burst(x, y, colors, n = 18) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, v = rand(60, 200);
+    S.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, t: 0, life: rand(.5, .9), c: colors[i % colors.length] });
+  }
+}
+function addScore(n) { S.score += Math.round(n); updateBoard(); }
+
+/* ============================================================
+   Update
+   ============================================================ */
+function update(dt) {
+  S.clock += dt;
+  S.parts.forEach(p => { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; });
+  S.parts = S.parts.filter(p => p.t < p.life);
+  S.floats.forEach(f => { f.t += dt; f.y -= 28 * dt; });
+  S.floats = S.floats.filter(f => f.t < 1.6);
+  S.shake = Math.max(0, S.shake - dt);
+  if (S.mode === "lost") { S.wolfX += 320 * dt; return; }
+  if (S.mode !== "playing") { syncWorkBtn(); return; }
+
+  S.time -= dt * S.D.drain[Math.min(S.round, 2)];
+  S.elapsed += dt;
+
+  const m = S.mini;
+  if (m) {
+    m.pop = Math.max(0, m.pop - dt); m.flash = Math.max(0, m.flash - dt);
+    if (m.type === "hold") {
+      m.holding = !!(input.holdKey || input.holdBtn || input.holdCanvas);
+      if (m.holding) {
+        const before = Math.floor(m.held);
+        m.held += dt;
+        if (Math.floor(m.held) > before && m.held < m.card.secs) beep(620, .05, "square", .03);
+        checkMini();
+      }
+    }
+    if (m.type === "timing") {
+      m.p += m.dir * m.speed * dt;
+      if (m.p > 1) { m.p = 2 - m.p; m.dir = -1; }
+      if (m.p < 0) { m.p = -m.p; m.dir = 1; }
+    }
+  } else {
+    // Movement
+    let dx = 0, dy = 0;
+    input.keys.forEach(k => { dx += MOVE_KEYS[k][0]; dy += MOVE_KEYS[k][1]; });
+    if (!dx && !dy && S.target) {
+      const tx = S.target.x - S.boy.x, ty = S.target.y - S.boy.y, d = Math.hypot(tx, ty);
+      if (d < 4) S.target = null; else { dx = tx / d; dy = ty / d; }
+    }
+    const len = Math.hypot(dx, dy);
+    S.boy.moving = len > 0;
+    if (len) {
+      dx /= len; dy /= len;
+      const step = CONFIG.WALK_SPEED * dt;
+      const nx = Math.max(PLAY.x0, Math.min(PLAY.x1, S.boy.x + dx * step));
+      const ny = Math.max(PLAY.y0, Math.min(PLAY.y1, S.boy.y + dy * step));
+      if (!blocked(nx, S.boy.y)) S.boy.x = nx;
+      if (!blocked(S.boy.x, ny)) S.boy.y = ny;
+      if (dx) S.boy.face = Math.sign(dx);
+      S.boy.step += dt * 10;
+    }
+  }
+
+  updateLambs(dt);
+
+  if (S.mode === "playing" && S.time <= 0) {
+    S.time = 0; S.mode = "lost"; S.mini = null;
+    chord([330, 277, 220], .16);
+    saveBest();
+    setTimeout(() => showOverlay("lost"), 1600);
+  }
+  syncCards(); syncWorkBtn();
+}
+
+function updateLambs(dt) {
+  S.lambTimer -= dt;
+  if (S.lambTimer <= 0) {
+    S.lambTimer = rand(...CONFIG.LAMB_EVERY);
+    for (let tries = 0; tries < 20; tries++) {
+      const x = rand(70, 730), y = rand(70, 550);
+      if (!blocked(x, y, 30) && dist({ x, y }, S.boy) > 160) {
+        S.lambs.push({ x, y, vx: 0, vy: 0, t: 0, turn: 0 }); break;
+      }
+    }
+  }
+  S.lambs.forEach(l => {
+    l.t += dt; l.turn -= dt;
+    if (l.turn <= 0) { const a = Math.random() * 7; l.vx = Math.cos(a) * 35; l.vy = Math.sin(a) * 35; l.turn = rand(.8, 1.8); }
+    const nx = l.x + l.vx * dt, ny = l.y + l.vy * dt;
+    if (nx < 60 || nx > 740 || blocked(nx, l.y, 16)) l.vx *= -1; else l.x = nx;
+    if (ny < 60 || ny > 556 || blocked(l.x, ny, 16)) l.vy *= -1; else l.y = ny;
+    if (!S.mini && dist(l, S.boy) < 26) {
+      l.caught = true; S.lambsCaught++;
+      const pts = 75 * S.D.mult; addScore(pts);
+      addFloat(`+${Math.round(pts)} lamb`, l.x, l.y - 20, "#f0e5c6");
+      burst(l.x, l.y, ["#ffffff", "#f0e5c6"], 10);
+      chord([784, 988], .05);
+    }
+  });
+  S.lambs = S.lambs.filter(l => !l.caught && l.t < CONFIG.LAMB_LIFE);
+}
+
+function finishCard(m) {
+  const card = m.card, h = HOUSES[card.house];
+  card.frac = 1; card.done = true; S.tasksDone++; S.mini = null;
+  const took = S.elapsed - m.t0;
+  const perfect = m.misses === 0;
+  if (perfect) { S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak); }
+  const speed = Math.max(0, (card.secs - took) * 50);
+  const streakBonus = perfect ? 25 * S.streak : 0;
+  const pts = (100 + speed + streakBonus) * S.D.mult;
+  addScore(pts);
+  addFloat(`+${Math.round(pts)}`, h.spot.x, h.spot.y - 34, "#f2a541", 24);
+  const tag = speed > 0 ? `Quick! ${took.toFixed(1)}s` : `${took.toFixed(1)}s`;
+  addFloat(perfect && S.streak > 1 ? `${tag} · streak ×${S.streak}` : tag, h.spot.x, h.spot.y - 10, "#f0e5c6", 16);
+  burst(h.spot.x, h.spot.y, ["#f2a541", "#8cc761", "#f0e5c6", h.roof]);
+  chord([523, 659]);
+  updateCount();
+
+  if (roundCards().every(c => c.done)) {
+    S.time = Math.min(S.D.max, S.time + CONFIG.ROUND_BONUS);
+    addScore(200 * S.D.mult);
+    addFloat(`+${CONFIG.ROUND_BONUS}s trust`, METER.x + METER.w / 2, METER.y + 40, "#8cc761");
+    addFloat(`Round ${S.round + 1} complete!`, 400, 300, "#8cc761", 30);
+    S.round++;
+    if (S.round >= ROUNDS.length) {
+      S.round = ROUNDS.length - 1;
+      S.mode = "won";
+      addScore(S.time * 20 * S.D.mult);
+      saveBest();
+      chord([523, 659, 784, 1047]);
+      burst(400, 300, ["#f2a541", "#8cc761", "#f0e5c6", "#e2604b"], 60);
+      setTimeout(() => showOverlay("won"), 1200);
+    } else {
+      chord([523, 659, 784], .1);
+      setTimeout(renderCards, 350);
+    }
+  }
+}
+function saveBest() {
+  if (S.score > S.best) { S.best = S.score; S.newBest = true; setBest(diffKey, S.score); }
+  updateBoard();
+}
+
+/* ============================================================
+   Draw
+   ============================================================ */
+function draw() {
+  ctx.save();
+  if (S.shake > 0) ctx.translate(rand(-5, 5) * S.shake * 4, rand(-5, 5) * S.shake * 4);
+  ctx.clearRect(-20, -20, W + 40, H + 40);
+
+  ctx.fillStyle = "#5b7a45"; ctx.fillRect(-20, -20, W + 40, H + 40);
+  ctx.fillStyle = "#516f3d";
+  tufts.forEach(t => { ctx.fillRect(t.x, t.y, t.s, t.s * 2); ctx.fillRect(t.x + 3, t.y + 1, t.s, t.s * 1.6); });
+  flowers.forEach(f => { ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(f.x, f.y, 2, 0, 7); ctx.fill(); });
+
+  ctx.strokeStyle = "#b8956a"; ctx.lineCap = "round"; ctx.lineWidth = 34;
+  HOUSES.forEach(h => { ctx.beginPath(); ctx.moveTo(400, 300); ctx.lineTo(h.spot.x, h.spot.y); ctx.stroke(); });
+  ctx.fillStyle = "#b8956a"; ctx.beginPath(); ctx.ellipse(400, 300, 92, 62, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = "#7d7a72"; ctx.beginPath(); ctx.arc(400, 300, 20, 0, 7); ctx.fill();
+  ctx.fillStyle = "#2a3b4d"; ctx.beginPath(); ctx.arc(400, 300, 12, 0, 7); ctx.fill();
+
+  ctx.fillStyle = "#24392a"; ctx.fillRect(-20, -20, 800, 60);
+  pines.forEach(p => { ctx.fillStyle = "#1e3324"; ctx.beginPath(); ctx.moveTo(p.x - 16, 40); ctx.lineTo(p.x, 40 - p.h); ctx.lineTo(p.x + 16, 40); ctx.fill(); });
+  if (S.time < CONFIG.LOW_TRUST && S.mode !== "won" && Math.sin(S.clock * 3) > -0.85) {
+    ctx.fillStyle = "#f2c94c";
+    [[50, 24], [690, 20]].forEach(([x, y], i) => {
+      const ox = Math.sin(S.clock * .7 + i * 2) * 30;
+      ctx.beginPath(); ctx.arc(x + ox, y, 2.6, 0, 7); ctx.arc(x + ox + 10, y, 2.6, 0, 7); ctx.fill();
+    });
+  }
+
+  ctx.strokeStyle = "#8a6a45"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(10, 588); ctx.lineTo(770, 588); ctx.moveTo(10, 580); ctx.lineTo(770, 580); ctx.stroke();
+  ctx.fillStyle = "#8a6a45"; for (let x = 14; x < 770; x += 40) ctx.fillRect(x, 572, 5, 24);
+
+  const pending = new Set(roundCards().filter(c => !c.done).map(c => c.house));
+  HOUSES.forEach((h, i) => drawHouse(h, i, pending.has(i) && S.mode !== "won"));
+  S.lambs.forEach(drawLamb);
+  drawBoy();
+  if (S.mode === "lost") drawWolf(S.wolfX, 300 + Math.sin(S.wolfX / 30) * 6);
+
+  S.parts.forEach(p => { ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.c; ctx.fillRect(p.x - 3, p.y - 3, 6, 6); });
+  ctx.globalAlpha = 1;
+
+  if (S.mini) drawMini(S.mini);
+
+  ctx.textAlign = "center";
+  S.floats.forEach(f => {
+    ctx.globalAlpha = Math.max(0, 1 - f.t / 1.6);
+    ctx.font = `700 ${f.size}px 'Alegreya Sans', sans-serif`;
+    ctx.lineWidth = 4; ctx.strokeStyle = "rgba(20,26,34,.85)"; ctx.strokeText(f.text, f.x, f.y);
+    ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  drawMeter();
+  drawHint();
+}
+
+function drawHouse(h, i, pending) {
+  const r = h.rect;
+  if (pending && S.mode === "playing") {
+    const pulse = 1 + Math.sin(S.clock * 4) * .06;
+    ctx.save(); ctx.setLineDash([6, 6]); ctx.lineDashOffset = -S.clock * 20;
+    ctx.strokeStyle = "rgba(242,165,65,.9)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(h.spot.x, h.spot.y, DOOR_R * pulse, 0, 7); ctx.stroke(); ctx.restore();
+  }
+  ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.fillRect(r.x + 8, r.y + 10, r.w, r.h);
+  const wallH = 22;
+  const wy = h.door === "bottom" ? r.y + r.h - wallH : r.y;
+  ctx.fillStyle = h.wall; ctx.fillRect(r.x, r.y, r.w, r.h);
+  const ry = h.door === "bottom" ? r.y : r.y + wallH;
+  ctx.fillStyle = h.roof; ctx.fillRect(r.x - 6, ry, r.w + 12, r.h - wallH);
+  ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.lineWidth = 1;
+  for (let y = ry + 10; y < ry + r.h - wallH; y += 10) { ctx.beginPath(); ctx.moveTo(r.x - 6, y); ctx.lineTo(r.x + r.w + 6, y); ctx.stroke(); }
+  ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(r.x - 6, ry + (r.h - wallH) / 2); ctx.lineTo(r.x + r.w + 6, ry + (r.h - wallH) / 2); ctx.stroke();
+  ctx.fillStyle = "#6e6259"; ctx.fillRect(r.x + r.w - 44, ry + 8, 18, 18);
+  ctx.fillStyle = "#5b3a24"; ctx.fillRect(h.cx - 12, wy + 2, 24, wallH - 2);
+  ctx.fillStyle = "#f6d98b"; ctx.fillRect(r.x + 26, wy + 6, 18, 10); ctx.fillRect(r.x + r.w - 44, wy + 6, 18, 10);
+  ctx.font = "19px 'IM Fell English SC', Georgia, serif"; ctx.textAlign = "center";
+  const sy = h.door === "bottom" ? r.y - 10 : r.y + r.h + 26;
+  ctx.fillStyle = "#ebe1c6";
+  const tw = ctx.measureText(h.name).width + 18;
+  ctx.fillRect(h.cx - tw / 2, sy - 17, tw, 23);
+  ctx.strokeStyle = "#6e7451"; ctx.lineWidth = 1.5; ctx.strokeRect(h.cx - tw / 2, sy - 17, tw, 23);
+  ctx.fillStyle = "#2b2a1f"; ctx.fillText(h.name, h.cx, sy);
+  const vx = h.cx + 44, vy = h.spot.y + (h.door === "bottom" ? -4 : 4);
+  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(vx, vy + 11, 10, 4, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = h.roof; ctx.beginPath(); ctx.arc(vx, vy, 10, 0, 7); ctx.fill();
+  ctx.fillStyle = "#e8c39e"; ctx.beginPath(); ctx.arc(vx, vy - 3, 6, 0, 7); ctx.fill();
+  if (pending) {
+    const by = vy - 30 + Math.sin(S.clock * 5 + i) * 2;
+    ctx.fillStyle = "#f0e5c6"; ctx.beginPath(); ctx.arc(vx + 12, by, 11, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(vx + 4, by + 8); ctx.lineTo(vx + 2, by + 16); ctx.lineTo(vx + 10, by + 10); ctx.fill();
+    ctx.fillStyle = "#c2412f"; ctx.font = "700 16px 'Alegreya Sans', sans-serif"; ctx.fillText("!", vx + 12, by + 6);
+  }
+}
+
+function drawLamb(l) {
+  const left = CONFIG.LAMB_LIFE - l.t;
+  if (left < 2 && Math.sin(l.t * 20) < 0) return; // blink before leaving
+  const hop = Math.abs(Math.sin(l.t * 8)) * 2;
+  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(l.x, l.y + 9, 12, 4, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = "#fbf7ec";
+  [[-6, 0], [0, -4], [6, 0], [0, 3], [-3, -2], [3, -2]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(l.x + dx, l.y + dy - hop, 6, 0, 7); ctx.fill(); });
+  const f = l.vx >= 0 ? 1 : -1;
+  ctx.fillStyle = "#3a3330"; ctx.beginPath(); ctx.ellipse(l.x + f * 11, l.y - 2 - hop, 4.5, 3.6, 0, 0, 7); ctx.fill();
+}
+
+function drawBoy() {
+  const b = S.boy;
+  const working = !!S.mini;
+  const bob = b.moving ? Math.abs(Math.sin(b.step)) * 3 : working ? Math.abs(Math.sin(S.clock * 14)) * 2 : 0;
+  ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(b.x, b.y + 13, 13, 5, 0, 0, 7); ctx.fill();
+  const y = b.y - bob;
+  if (b.moving) {
+    ctx.fillStyle = "#3e2c22";
+    ctx.fillRect(b.x - 6 + Math.sin(b.step) * 3, y + 6, 4, 8);
+    ctx.fillRect(b.x + 2 - Math.sin(b.step) * 3, y + 6, 4, 8);
+  }
+  ctx.fillStyle = "#3f6fa8"; ctx.beginPath(); ctx.arc(b.x, y, 12, 0, 7); ctx.fill();
+  ctx.fillStyle = "#f0c9a0"; ctx.beginPath(); ctx.arc(b.x + b.face * 2, y - 9, 8, 0, 7); ctx.fill();
+  ctx.fillStyle = "#7a4a26"; ctx.beginPath(); ctx.ellipse(b.x + b.face * 2, y - 14, 11, 4, 0, 0, 7); ctx.fill();
+  ctx.fillRect(b.x + b.face * 2 - 6, y - 21, 12, 7);
+  ctx.fillStyle = "#1b2531"; ctx.beginPath(); ctx.arc(b.x + b.face * 6, y - 9, 1.6, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#a07a4e"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(b.x - b.face * 14, y + 12); ctx.lineTo(b.x - b.face * 14, y - 18);
+  ctx.arc(b.x - b.face * 10, y - 18, 4, Math.PI, 0, b.face < 0); ctx.stroke();
+}
+
+function drawArrow(x, y, s, d, color) {
+  const rot = { U: -Math.PI / 2, D: Math.PI / 2, L: Math.PI, R: 0 }[d];
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(s * .5, 0); ctx.lineTo(0, -s * .42); ctx.lineTo(0, -s * .16); ctx.lineTo(-s * .45, -s * .16);
+  ctx.lineTo(-s * .45, s * .16); ctx.lineTo(0, s * .16); ctx.lineTo(0, s * .42); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawMini(m) {
+  const P = PANEL;
+  ctx.fillStyle = "#ece2c6"; ctx.fillRect(P.x, P.y, P.w, P.h);
+  ctx.strokeStyle = m.flash > 0 ? "#b5554a" : "#6e7451"; ctx.lineWidth = 2; ctx.strokeRect(P.x, P.y, P.w, P.h);
+  ctx.strokeStyle = "rgba(110,116,81,.6)"; ctx.lineWidth = 1; ctx.strokeRect(P.x + 5, P.y + 5, P.w - 10, P.h - 10);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#2b2a1f"; ctx.font = "22px 'IM Fell English', Georgia, serif";
+  ctx.fillText(m.card.task, 400, P.y + 30);
+  const took = S.elapsed - m.t0, par = m.card.secs;
+  ctx.font = "600 13px 'Alegreya Sans', sans-serif";
+  ctx.fillStyle = took <= par ? "#6f8f4e" : "#b5554a";
+  ctx.textAlign = "right"; ctx.fillText(`${took.toFixed(1)}s / ${par}s`, P.x + P.w - 12, P.y + 22);
+  ctx.textAlign = "center"; ctx.fillStyle = "#615d47";
+  const inst = { hold: "Hold Space or the Work button. Let go to pause.", timing: "Press Space when the marker is in the gold zone", arrows: "Press the arrows in order" }[m.type];
+  ctx.fillText(inst, 400, P.y + 52);
+
+  if (m.type === "hold") {
+    const on = m.holding, push = on ? 4 : 0;
+    ctx.save(); ctx.translate(400, P.y + 92);
+    ctx.fillStyle = "#8b8a62"; ctx.fillRect(-90, -18, 180, 40);
+    ctx.fillStyle = on ? "#c08a2c" : "#d6c9a6"; ctx.fillRect(-90, -22 + push, 180, 38);
+    ctx.fillStyle = on ? "#efe6cc" : "#2b2a1f"; ctx.font = "700 17px 'Alegreya Sans', sans-serif";
+    ctx.fillText(on ? "WORKING..." : "HOLD SPACE", 0, 3 + push); ctx.restore();
+    bar(P.x + 30, P.y + 136, P.w - 60, 14, m.held / m.card.secs, "#c08a2c");
+    ctx.fillStyle = "#615d47"; ctx.font = "13px 'Alegreya Sans', sans-serif";
+    ctx.fillText(`${Math.max(0, m.card.secs - m.held).toFixed(1)}s left`, 400, P.y + 164);
+  }
+  if (m.type === "timing") {
+    const bx = P.x + 30, bw = P.w - 60, by = P.y + 78, bh = 26;
+    ctx.fillStyle = "#d6c9a6"; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = "#c08a2c"; ctx.fillRect(bx + (m.c - m.w / 2) * bw, by, m.w * bw, bh);
+    const mx = bx + m.p * bw;
+    ctx.fillStyle = "#2b2a1f"; ctx.fillRect(mx - 3, by - 8, 6, bh + 16);
+    for (let i = 0; i < m.need; i++) {
+      const cx = 400 + (i - (m.need - 1) / 2) * 28;
+      ctx.beginPath(); ctx.arc(cx, P.y + 136, 9, 0, 7);
+      ctx.fillStyle = i < m.hits ? "#6f8f4e" : "#8b8a62"; ctx.fill();
+    }
+  }
+  if (m.type === "arrows") {
+    const n = m.seq.length, sp = Math.min(46, (P.w - 40) / n);
+    m.seq.forEach((d, i) => {
+      const x = 400 + (i - (n - 1) / 2) * sp, y = P.y + 88;
+      const cur = i === m.i;
+      if (cur) { ctx.fillStyle = "#8b8a62"; ctx.fillRect(x - sp / 2 + 3, y - 20, sp - 6, 40); }
+      const sz = cur ? 30 + m.pop * 30 : 26;
+      drawArrow(x, y, sz, d, i < m.i ? "#6f8f4e" : cur ? (m.flash > 0 ? "#b5554a" : "#c08a2c") : "#615d47");
+    });
+    arrowButtons().forEach(b => {
+      ctx.fillStyle = "#d6c9a6"; ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.strokeStyle = "#8b8a62"; ctx.lineWidth = 1; ctx.strokeRect(b.x, b.y, b.w, b.h);
+      drawArrow(b.x + b.w / 2, b.y + b.h / 2, 22, b.d, "#2b2a1f");
+    });
+  }
+}
+function bar(x, y, w, h, f, c) {
+  ctx.fillStyle = "#d6c9a6"; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = c; ctx.fillRect(x, y, w * Math.min(1, f), h);
+}
+
+function drawWolf(x, y) {
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(0, 20, 40, 7, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = "#6c6f78";
+  ctx.beginPath(); ctx.ellipse(0, 0, 38, 18, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-34, -4); ctx.lineTo(-64, -16); ctx.lineTo(-38, 6); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(40, -8, 16, 12, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(50, -6); ctx.lineTo(66, -2); ctx.lineTo(50, 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(32, -16); ctx.lineTo(36, -30); ctx.lineTo(42, -18); ctx.fill();
+  ctx.fillStyle = "#f2c94c"; ctx.beginPath(); ctx.arc(46, -11, 2.4, 0, 7); ctx.fill();
+  ctx.fillStyle = "#555861";
+  const k = Math.sin(x / 12) * 6;
+  ctx.fillRect(-24 + k, 12, 6, 14); ctx.fillRect(18 - k, 12, 6, 14);
+  ctx.restore();
+}
+
+function drawMeter() {
+  ctx.fillStyle = "#e6dbbd"; ctx.fillRect(780, 0, 100, H);
+  ctx.fillStyle = "#6e7451"; ctx.fillRect(780, 0, 2, H); ctx.fillRect(785, 0, 1, H);
+  const m = METER, max = S.D.max, frac = Math.max(0, Math.min(1, S.time / max));
+  ctx.textAlign = "center"; ctx.fillStyle = "#2b2a1f";
+  ctx.font = "18px 'IM Fell English SC', Georgia, serif"; ctx.fillText("Trust", m.x + m.w / 2, 46);
+  ctx.fillStyle = "#d6c9a6"; ctx.fillRect(m.x, m.y, m.w, m.h);
+  const col = S.time > 30 ? "#6f8f4e" : S.time > CONFIG.LOW_TRUST ? "#c08a2c" : "#b5554a";
+  const fh = m.h * frac;
+  ctx.fillStyle = col; ctx.fillRect(m.x, m.y + m.h - fh, m.w, fh);
+  ctx.fillStyle = "rgba(43,42,31,.3)";
+  for (let s = 10; s < max; s += 10) ctx.fillRect(m.x, m.y + m.h - m.h * s / max, m.w, 2);
+  ctx.strokeStyle = "#8b8a62"; ctx.lineWidth = 2; ctx.strokeRect(m.x, m.y, m.w, m.h);
+  ctx.fillStyle = col; ctx.font = "700 26px 'Alegreya Sans', sans-serif";
+  ctx.fillText(Math.ceil(S.time), m.x + m.w / 2, m.y + m.h + 36);
+  ctx.fillStyle = "#615d47"; ctx.font = "14px 'Alegreya Sans', sans-serif";
+  ctx.fillText("seconds", m.x + m.w / 2, m.y + m.h + 54);
+}
+
+function drawHint() {
+  if (S.mode !== "playing" || S.mini) return;
+  const card = pendingHere(), here = houseAtDoor();
+  let msg = "Walk to a house with a ! over the villager";
+  if (card) msg = `Press Space or tap the house: ${card.task}`;
+  else if (here !== null) msg = `${HOUSES[here].villager} needs nothing else this round`;
+  else if (S.time < CONFIG.LOW_TRUST) msg = "The wolf is watching. Hurry!";
+  ctx.font = "600 17px 'Alegreya Sans', sans-serif"; ctx.textAlign = "center";
+  const w = ctx.measureText(msg).width + 28;
+  ctx.fillStyle = "rgba(236,226,198,.95)"; ctx.fillRect(390 - w / 2, 6, w, 30);
+  ctx.fillStyle = "#2b2a1f"; ctx.fillText(msg, 390, 27);
+}
+
+/* ============================================================
+   Loop
+   ============================================================ */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  update(dt); draw();
+  requestAnimationFrame(frame);
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+["pointerup", "pointercancel", "pointerleave"].forEach(t => cv.addEventListener(t, () => input.holdCanvas = false));
+document.getElementById("bonusSecs").textContent = `+${CONFIG.ROUND_BONUS} seconds`;
+reset();
+requestAnimationFrame(frame);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+</script>
+
+</body>
+</html>
